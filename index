@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학생 수강권 조회 시스템</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f0f4f8;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .school-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+        }
+        
+        .result-appear {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .school-card {
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.1), 0 8px 10px -6px rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+        }
+
+        /* 모바일 최적화 */
+        @media (max-width: 640px) {
+            .school-container {
+                width: 100%;
+                padding: 0 1rem;
+            }
+            
+            .school-header {
+                border-radius: 1rem 1rem 0 0;
+                padding: 1.25rem 1rem;
+            }
+            
+            .school-card {
+                border-radius: 0 0 1rem 1rem;
+                padding: 1.25rem 1rem;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .input-field {
+                width: 100%;
+                border-radius: 0.5rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .search-button {
+                width: 100%;
+                border-radius: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4 md:p-8">
+    <div class="w-full max-w-md mx-auto school-container">
+        <div class="school-header w-full rounded-t-xl p-4 md:p-6 text-center text-white">
+            <h1 class="text-xl md:text-2xl font-bold mb-1">인터넷 수강권 조회</h1>
+            <p class="text-blue-100 text-xs md:text-sm">학번을 입력하여 수강권 정보를 확인하세요</p>
+        </div>
+        
+        <div class="school-card bg-white rounded-b-xl w-full p-4 md:p-6 lg:p-8">
+            <div id="searchForm" class="mb-5">
+                <label for="studentId" class="block text-sm font-medium text-gray-700 mb-2">학번</label>
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <input 
+                        type="text" 
+                        id="studentId" 
+                        class="flex-1 rounded-lg sm:rounded-l-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                        placeholder="학번을 입력하세요.(예시: 3126)"
+                    >
+                    <button 
+                        id="searchBtn" 
+                        class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-3 rounded-lg sm:rounded-l-none transition duration-200"
+                    >
+                        조회하기
+                    </button>
+                </div>
+            </div>
+
+            <div id="resultContainer" class="hidden bg-blue-50 rounded-lg p-4 md:p-5 border border-blue-100">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-800">수강권 정보</h2>
+                        <p id="studentName" class="text-sm text-gray-600">이름: -</p>
+                    </div>
+                    <span id="studentIdDisplay" class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded self-start sm:self-center">학번</span>
+                </div>
+                
+                <div class="space-y-3 md:space-y-4">
+                    <div class="bg-white p-3 rounded-lg border border-blue-100">
+                        <p class="text-sm text-gray-500 mb-1">아이디</p>
+                        <div class="flex items-center justify-between">
+                            <p id="userId" class="font-medium text-gray-800 mr-2 break-all">-</p>
+                            <button id="copyId" class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1 rounded transition-colors whitespace-nowrap">복사</button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-3 rounded-lg border border-blue-100">
+                        <p class="text-sm text-gray-500 mb-1">비밀번호</p>
+                        <div class="flex items-center justify-between">
+                            <p id="userPw" class="font-medium text-gray-800 mr-2 break-all">-</p>
+                            <button id="copyPw" class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1 rounded transition-colors whitespace-nowrap">복사</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 pt-3 border-t border-blue-100">
+                    <p class="text-xs text-gray-500">* 본 수강권은 개인 사용 목적으로만 제공됩니다.</p>
+                    <p class="text-xs text-gray-500">* 타인에게 공유하지 마세요.</p>
+                </div>
+                
+                <div class="mt-4">
+                    <button 
+                        id="searchAgainBtn" 
+                        class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded transition-colors"
+                    >
+                        다시 조회하기
+                    </button>
+                </div>
+            </div>
+            
+            <div id="errorContainer" class="hidden bg-red-50 text-red-800 p-4 rounded-lg mt-4">
+                <p class="flex items-center">
+                    <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span id="errorMessage">학번을 찾을 수 없습니다. 다시 확인해주세요.</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 학생 데이터
+        const studentData = {
+            "3106": { name: "김준", id: "khm06001", password: "!@khm06001" },
+            "3107": { name: "박지성", id: "khm06002", password: "!@khm06002" },
+            "3108": { name: "박혜애단", id: "khm06003", password: "!@khm06003" },
+            "3111": { name: "여예준", id: "khm06004", password: "!@khm06004" },
+            "3115": { name: "이현서", id: "khm06005", password: "!@khm06005" },
+            "3118": { name: "전예찬", id: "khm06006", password: "!@khm06006" },
+            "3208": { name: "김태양", id: "khm06007", password: "!@khm06007" },
+            "3211": { name: "박민서", id: "khm06008", password: "!@khm06008" },
+            "3214": { name: "유진성", id: "khm06009", password: "!@khm06009" },
+            "3217": { name: "이선우", id: "khm06010", password: "!@khm06010" },
+            "3219": { name: "이율하", id: "khm06011", password: "!@khm06011" },
+            "3225": { name: "한재강", id: "khm06012", password: "!@khm06012" },
+            "3302": { name: "고예손", id: "khm06013", password: "!@khm06013" },
+            "3304": { name: "김동현", id: "khm06014", password: "!@khm06014" },
+            "3306": { name: "김은원", id: "khm06015", password: "!@khm06015" },
+            "3310": { name: "박영한", id: "khm06016", password: "!@khm06016" },
+            "3318": { name: "이시윤", id: "khm06017", password: "!@khm06017" },
+            "3324": { name: "조대현", id: "khm06018", password: "!@khm06018" },
+            "3405": { name: "김수빈", id: "khm06019", password: "!@khm06019" },
+            "3406": { name: "김요셉", id: "khm06020", password: "!@khm06020" },
+            "3409": { name: "방성민", id: "khm06021", password: "!@khm06021" },
+            "3414": { name: "유용태", id: "khm06022", password: "!@khm06022" },
+            "3416": { name: "이현우", id: "khm06023", password: "!@khm06023" },
+            "3418": { name: "차두리", id: "khm06024", password: "!@khm06024" },
+            "3514": { name: "이준택", id: "khm06025", password: "!@khm06025" },
+            "3515": { name: "이하준", id: "khm06026", password: "!@khm06026" },
+            "3517": { name: "장기주", id: "khm06027", password: "!@khm06027" },
+            "3519": { name: "정현준", id: "khm06028", password: "!@khm06028" },
+            "3520": { name: "조은혁", id: "khm06029", password: "!@khm06029" },
+            "3522": { name: "홍우주", id: "khm06030", password: "!@khm06030" },
+            "3608": { name: "여예하", id: "khm06031", password: "!@khm06031" },
+            "3614": { name: "정동화", id: "khm06032", password: "!@khm06032" },
+            "3615": { name: "정지후", id: "khm06033", password: "!@khm06033" },
+            "3620": { name: "하은총", id: "khm06034", password: "!@khm06034" },
+            "3623": { name: "황순욱", id: "khm06035", password: "!@khm06035" },
+            "3624": { name: "황준선", id: "khm06036", password: "!@khm06036" }
+        };
+
+        const searchBtn = document.getElementById('searchBtn');
+        const searchAgainBtn = document.getElementById('searchAgainBtn');
+        const studentIdInput = document.getElementById('studentId');
+        const resultContainer = document.getElementById('resultContainer');
+        const errorContainer = document.getElementById('errorContainer');
+        const studentIdDisplay = document.getElementById('studentIdDisplay');
+        const studentName = document.getElementById('studentName');
+        const userId = document.getElementById('userId');
+        const userPw = document.getElementById('userPw');
+        const copyId = document.getElementById('copyId');
+        const copyPw = document.getElementById('copyPw');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // 페이지 로드 시 입력 필드에 포커스
+        window.addEventListener('load', function() {
+            studentIdInput.focus();
+        });
+
+        // 조회 버튼 클릭 이벤트
+        searchBtn.addEventListener('click', searchStudent);
+        
+        // 다시 조회하기 버튼 클릭 이벤트
+        searchAgainBtn.addEventListener('click', resetSearch);
+        
+        // 엔터키 입력 이벤트
+        studentIdInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchStudent();
+            }
+        });
+
+        function searchStudent() {
+            const studentId = studentIdInput.value.trim();
+            
+            // 입력값 검증
+            if (!studentId) {
+                showError("학번을 입력해주세요.");
+                return;
+            }
+            
+            // 학생 데이터 조회
+            const student = studentData[studentId];
+            
+            if (student) {
+                // 학생 정보가 있는 경우
+                studentIdDisplay.textContent = studentId;
+                studentName.textContent = `이름: ${student.name}`;
+                userId.textContent = student.id;
+                userPw.textContent = student.password;
+                
+                resultContainer.classList.remove('hidden');
+                resultContainer.classList.add('result-appear');
+                errorContainer.classList.add('hidden');
+            } else {
+                // 학생 정보가 없는 경우
+                showError("입력한 학번의 정보를 찾을 수 없습니다.");
+                resultContainer.classList.add('hidden');
+            }
+        }
+
+        function resetSearch() {
+            // 결과 컨테이너 숨기기
+            resultContainer.classList.add('hidden');
+            errorContainer.classList.add('hidden');
+            
+            // 입력 필드 초기화
+            studentIdInput.value = '';
+            
+            // 입력 필드에 포커스
+            studentIdInput.focus();
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorContainer.classList.remove('hidden');
+        }
+
+        // 복사 기능
+        copyId.addEventListener('click', () => {
+            copyToClipboard(userId.textContent);
+            showCopyFeedback(copyId);
+        });
+
+        copyPw.addEventListener('click', () => {
+            copyToClipboard(userPw.textContent);
+            showCopyFeedback(copyPw);
+        });
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text)
+                .catch(err => console.error('복사 실패:', err));
+        }
+
+        function showCopyFeedback(element) {
+            const originalText = element.textContent;
+            element.textContent = "복사됨!";
+            element.classList.add('bg-green-100');
+            element.classList.add('text-green-700');
+            element.classList.remove('bg-blue-100');
+            element.classList.remove('text-blue-700');
+            
+            setTimeout(() => {
+                element.textContent = originalText;
+                element.classList.remove('bg-green-100');
+                element.classList.remove('text-green-700');
+                element.classList.add('bg-blue-100');
+                element.classList.add('text-blue-700');
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
